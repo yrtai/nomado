@@ -1,0 +1,19 @@
+[
+  {"name": "type: feature", "color": "0E8A16", "description": "New functionality"},
+  {"name": "type: bug", "color": "D73A4A", "description": "Something is broken"},
+  {"name": "type: docs", "color": "0075CA", "description": "Documentation"},
+  {"name": "type: chore", "color": "BFD4F2", "description": "Maintenance, tooling, config"},
+  {"name": "type: test", "color": "FBCA04", "description": "Tests only"},
+  {"name": "area: frontend", "color": "5319E7", "description": "apps/web"},
+  {"name": "area: backend", "color": "1D76DB", "description": "apps/api"},
+  {"name": "area: infra", "color": "0052CC", "description": "CI, deploy, tooling, monorepo"},
+  {"name": "area: design", "color": "D4C5F9", "description": "UI/UX design work"},
+  {"name": "size: XS", "color": "C2E0C6", "description": "Under 2 hours"},
+  {"name": "size: S", "color": "76C893", "description": "Under a day"},
+  {"name": "size: M", "color": "2D6A4F", "description": "Under a week"},
+  {"name": "good first issue", "color": "7057FF", "description": "Safe for a brand-new contributor"},
+  {"name": "help wanted", "color": "008672", "description": "Ready and needs an owner"},
+  {"name": "blocked", "color": "B60205", "description": "Waiting on a linked issue"},
+  {"name": "epic", "color": "3E4B9E", "description": "Parent issue tracking child issues"},
+  {"name": "research", "color": "FEF2C0", "description": "Output is a written doc, not code"}
+]

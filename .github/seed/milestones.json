@@ -1,0 +1,11 @@
+[
+  {"title": "Phase 0: Project & GitHub setup", "description": "Demo criterion: repo, CI, project board, templates live; `pnpm dev` boots web+api+db. See docs/roadmap.md"},
+  {"title": "Phase 1: Auth & users", "description": "Demo criterion: register, login (email + Google), profile page, roles."},
+  {"title": "Phase 2: Listings", "description": "Demo criterion: host creates a stay/car/tour with photos; visible on detail page."},
+  {"title": "Phase 3: Search & discovery", "description": "Demo criterion: map + filter search across all three types; listing pages public."},
+  {"title": "Phase 4: Booking & payments", "description": "Demo criterion: search → book → pay (test mode) → confirmation email, end to end."},
+  {"title": "Phase 5: Reviews, messaging, wishlists", "description": "Demo criterion: two-sided reviews, guest↔host chat, saved listings."},
+  {"title": "Phase 6: Admin & operations", "description": "Demo criterion: moderation panel, host payouts, Sentry + metrics, rate limiting."},
+  {"title": "Phase 7: Polish & launch", "description": "Demo criterion: i18n (EN/RU/KG), SEO, a11y pass, performance budget, production deploy."},
+  {"title": "Phase 8: Advanced (stretch)", "description": "Mobile app, search engine migration, payments service extraction. Ongoing."}
+]

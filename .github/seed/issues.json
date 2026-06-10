@@ -1,0 +1,146 @@
+{
+  "milestone": "Phase 0: Project & GitHub setup",
+  "epics": [
+    {
+      "title": "Epic 0.1: Repository scaffold",
+      "labels": ["epic", "area: infra"],
+      "intro": "Monorepo skeleton: one `pnpm dev` boots web + api + local DB. See docs/system-design.md §3.1.",
+      "issues": [
+        {
+          "title": "Initialize pnpm + Turborepo monorepo with apps/ and packages/",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nFoundation for everything; layout per docs/system-design.md §3.1.\n\n## Acceptance criteria\n- [ ] `pnpm-workspace.yaml` covers `apps/*` and `packages/*`\n- [ ] `turbo.json` with `dev`, `build`, `lint`, `test` pipelines\n- [ ] Root `package.json` scripts proxy to turbo\n- [ ] `.gitignore`, `.nvmrc` (Node 20)\n\n## Hints\nTurborepo docs → \"Getting started with existing monorepo\"."
+        },
+        {
+          "title": "Scaffold apps/api: Express + TypeScript with modular layout",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nThe modular monolith starts here. Modules live in `src/modules/<name>`; see docs/system-design.md §3.2.\n\n## Acceptance criteria\n- [ ] Express + TS, `pnpm dev` hot-reloads (tsx watch)\n- [ ] `GET /health` returns `{status:'ok'}`\n- [ ] `src/modules/` exists with a README explaining module boundaries\n- [ ] Error-handling middleware returns problem+json (RFC 7807)\n\n## Hints\nKeep it minimal — no DB yet (#7)."
+        },
+        {
+          "title": "Scaffold apps/web: Next.js + TypeScript + Tailwind",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Context\nFrontend app shell.\n\n## Acceptance criteria\n- [ ] Next.js (App Router) + TS + Tailwind\n- [ ] Home page renders project name + link to GitHub\n- [ ] `pnpm dev` from root starts it via turbo\n\n## Hints\n`pnpm create next-app` inside `apps/web`, then wire workspace deps."
+        },
+        {
+          "title": "Create packages/shared with zod and one shared type used by web AND api",
+          "labels": ["type: feature", "area: backend", "area: frontend", "size: S"],
+          "body": "## Context\nShared validation schemas are how frontend and backend stay in sync — core pattern of this codebase (docs/system-design.md §3.3).\n\n## Acceptance criteria\n- [ ] `packages/shared` exports a zod schema (e.g. `HealthResponse`)\n- [ ] api uses it to shape `/health`; web uses it to parse the response\n- [ ] Type-checked end to end (`pnpm typecheck` green)\n\n## Hints\nUse `exports` map in package.json; no build step needed if consumed as TS source."
+        },
+        {
+          "title": "Create packages/config: shared eslint, prettier, tsconfig presets",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nOne source of truth for code style across all apps/packages.\n\n## Acceptance criteria\n- [ ] Shared tsconfig base + eslint flat config + prettier config\n- [ ] apps/web, apps/api, packages/shared extend them\n- [ ] `pnpm lint` green from root\n\n## Hints\nKeep rules modest; strictness can grow later."
+        },
+        {
+          "title": "docker-compose for local dev: Postgres 16 + PostGIS + Redis",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nEveryone needs identical local infra. PostGIS is required for geo search later (docs/system-design.md §4).\n\n## Acceptance criteria\n- [ ] `docker compose up -d` starts postgis/postgis:16 + redis:7 with volumes\n- [ ] Ports/credentials match `.env.example` (#9)\n- [ ] README section: prerequisites + how to start/stop/reset\n\n## Hints\nUse healthchecks so dependent tooling can wait."
+        },
+        {
+          "title": "Add ORM (Prisma) connected to local Postgres + first migration",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nMigrations-from-day-one is a habit this project teaches.\n\n## Acceptance criteria\n- [ ] Prisma configured against docker-compose DB\n- [ ] An initial (even empty/placeholder) migration committed\n- [ ] `pnpm db:migrate` script documented\n\n## Hints\nSchema for real tables comes in Phase 1 — don't model User yet."
+        },
+        {
+          "title": "Root `pnpm dev` runs web + api concurrently; document in README",
+          "labels": ["type: chore", "area: infra", "size: XS", "good first issue"],
+          "body": "## Context\nOne-command local development.\n\n## Acceptance criteria\n- [ ] `pnpm dev` at root starts web (3000) and api (4000) via turbo\n- [ ] README \"Getting started\" section: clone → install → compose up → dev\n\n## Hints\nDepends on #1–#3 being merged."
+        },
+        {
+          "title": ".env.example + env validation with zod on api boot",
+          "labels": ["type: chore", "area: backend", "size: XS", "good first issue"],
+          "body": "## Context\nFail fast on misconfiguration; never commit secrets.\n\n## Acceptance criteria\n- [ ] `.env.example` lists every env var with comments\n- [ ] api validates env with zod at startup and exits with a clear message if invalid\n\n## Hints\nPattern: `const env = envSchema.parse(process.env)` exported from one module."
+        }
+      ]
+    },
+    {
+      "title": "Epic 0.2: GitHub configuration",
+      "labels": ["epic", "type: docs"],
+      "intro": "Templates, docs and settings that make contribution self-service. Rules in docs/github-workflow.md.",
+      "issues": [
+        {
+          "title": "Issue templates: feature.yml, bug.yml, research.yml",
+          "labels": ["type: docs", "size: S"],
+          "body": "## Context\nGood issues are the engine of this project (docs/github-workflow.md §2).\n\n## Acceptance criteria\n- [ ] `.github/ISSUE_TEMPLATE/feature.yml`: user story, acceptance criteria, hints, files-to-touch\n- [ ] `bug.yml`: steps, expected/actual, environment\n- [ ] `research.yml`: question, deliverable (doc/Discussion), sources\n- [ ] `config.yml` disables blank issues, links Discussions for questions\n\n## Hints\nUse GitHub issue forms (YAML), not markdown templates."
+        },
+        {
+          "title": "PR template with test-plan checklist",
+          "labels": ["type: docs", "size: XS", "good first issue"],
+          "body": "## Context\nEvery PR answers: what, why, how tested (docs/github-workflow.md §2).\n\n## Acceptance criteria\n- [ ] `.github/PULL_REQUEST_TEMPLATE.md` with what/why, test plan, screenshots section, checklist (tests, docs, self-review)\n- [ ] Mentions `Closes #<issue>` convention\n\n## Hints\nKeep it short enough that people actually fill it."
+        },
+        {
+          "title": "Enable branch protection on main (maintainer)",
+          "labels": ["type: chore", "area: infra", "size: XS"],
+          "body": "## Context\nThe golden path is enforced, not voluntary (docs/github-workflow.md §1–2).\n\n## Acceptance criteria\n- [ ] Require PR + 1 approval, required status checks (lint/typecheck/test/build), conversation resolution, no force push, admins included\n- [ ] Screenshot of settings attached to this issue\n\n## Hints\nSettings → Branches → Add rule. Status checks appear after CI (#19) has run once."
+        },
+        {
+          "title": "Create GitHub Project board with automation",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nBoard = live state of the project (docs/github-workflow.md §2).\n\n## Acceptance criteria\n- [ ] Org-level Project: Backlog / Ready / In Progress / In Review / Done\n- [ ] Workflows: item added → Backlog; assigned → In Progress; PR linked → In Review; merged/closed → Done\n- [ ] Views: by milestone, by assignee, by area label\n- [ ] All open issues added\n\n## Hints\nGitHub Projects (new), built-in workflows tab."
+        },
+        {
+          "title": "Add CODEOWNERS for payments, auth and .github paths",
+          "labels": ["type: chore", "area: infra", "size: XS"],
+          "body": "## Context\nSensitive paths need maintainer review automatically (docs/github-workflow.md §2).\n\n## Acceptance criteria\n- [ ] `.github/CODEOWNERS` covers `/apps/api/src/modules/payments/`, `/apps/api/src/modules/auth/`, `/.github/`\n- [ ] Owners = maintainer team/users\n\n## Hints\nCreate an org team `@yrtai/maintainers` first."
+        },
+        {
+          "title": "Enable Discussions with Q&A, Ideas, Show & Tell categories",
+          "labels": ["type: docs", "size: XS", "good first issue"],
+          "body": "## Context\nQuestions go to Discussions; issues stay actionable (docs/github-workflow.md §2).\n\n## Acceptance criteria\n- [ ] Discussions enabled, three categories configured\n- [ ] Welcome post pinned: where to ask what, link to CONTRIBUTING\n\n## Hints\nRepo Settings → Features → Discussions."
+        },
+        {
+          "title": "Write CONTRIBUTING.md: golden path, local setup, first-PR walkthrough",
+          "labels": ["type: docs", "size: S"],
+          "body": "## Context\nThe single doc every new contributor reads first.\n\n## Acceptance criteria\n- [ ] Golden path summary (from docs/github-workflow.md §1)\n- [ ] Local setup steps (after #8 exists)\n- [ ] \"Your first PR\" walkthrough pointing to CONTRIBUTORS.md (#18)\n- [ ] Linked from README\n\n## Hints\nWrite for someone who has never opened a PR."
+        },
+        {
+          "title": "Add CODE_OF_CONDUCT.md and LICENSE (MIT)",
+          "labels": ["type: docs", "size: XS", "good first issue"],
+          "body": "## Context\nStandard open-source hygiene.\n\n## Acceptance criteria\n- [ ] Contributor Covenant v2.1 as CODE_OF_CONDUCT.md with contact method\n- [ ] MIT LICENSE with org name and year\n\n## Hints\nGitHub has built-in pickers for both."
+        },
+        {
+          "title": "Create CONTRIBUTORS.md — every new member adds themselves as their first PR",
+          "labels": ["type: docs", "size: XS", "good first issue", "help wanted"],
+          "body": "## Context\nZero-risk first PR: fork/branch → add your name → PR → review → merge. This is the onboarding ritual.\n\n## Acceptance criteria\n- [ ] CONTRIBUTORS.md with table: name, GitHub handle, focus area\n- [ ] Instructions at top for adding yourself\n- [ ] Linked from CONTRIBUTING.md\n\n## Hints\nSeed it with the maintainers."
+        }
+      ]
+    },
+    {
+      "title": "Epic 0.3: CI/CD",
+      "labels": ["epic", "area: infra"],
+      "intro": "Red CI blocks merge — the quality gate that teaches discipline.",
+      "issues": [
+        {
+          "title": "CI workflow: lint + typecheck + test on every PR",
+          "labels": ["type: chore", "area: infra", "size: M"],
+          "body": "## Context\nThe required status checks behind branch protection (#12).\n\n## Acceptance criteria\n- [ ] `.github/workflows/ci.yml` on pull_request: install (pnpm cache) → turbo lint, typecheck, test\n- [ ] Turborepo remote/CI caching configured\n- [ ] Fails red on a deliberately broken test (prove it in the PR, then fix)\n\n## Hints\n`pnpm/action-setup` + `actions/setup-node` with pnpm cache."
+        },
+        {
+          "title": "CI: build check for web and api",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nCatch build-only failures (env, next config) before merge.\n\n## Acceptance criteria\n- [ ] `turbo build` job added to CI, green on main\n- [ ] Build artifacts cached between jobs where sensible\n\n## Hints\nExtends #19."
+        },
+        {
+          "title": "PR title linter: enforce Conventional Commits",
+          "labels": ["type: chore", "area: infra", "size: XS", "good first issue"],
+          "body": "## Context\nSquash-merge uses the PR title as the commit message — titles must be conventional (docs/github-workflow.md §1).\n\n## Acceptance criteria\n- [ ] Action validates PR title (`feat(scope): ...` etc.), fails with a helpful message\n- [ ] Allowed types documented in CONTRIBUTING\n\n## Hints\n`amannn/action-semantic-pull-request`."
+        },
+        {
+          "title": "Enable Dependabot and CodeQL scanning",
+          "labels": ["type: chore", "area: infra", "size: S"],
+          "body": "## Context\nSecurity baseline (docs/system-design.md §8).\n\n## Acceptance criteria\n- [ ] `dependabot.yml`: weekly npm + github-actions updates, grouped\n- [ ] CodeQL workflow enabled for JS/TS\n- [ ] Both produce at least one run\n\n## Hints\nSettings → Code security for CodeQL default setup."
+        },
+        {
+          "title": "Auto-deploy main to staging (web → Vercel, api → Render/Railway)",
+          "labels": ["type: chore", "area: infra", "size: M"],
+          "body": "## Context\nWeekly demos run from staging; merge = deployed (docs/github-workflow.md §6).\n\n## Acceptance criteria\n- [ ] Web deploys from main to a public staging URL\n- [ ] API + managed Postgres/Redis deployed, `/health` public\n- [ ] Staging URLs in README\n- [ ] Env vars documented in `.env.example`\n\n## Hints\nFree tiers; managed Postgres must support PostGIS (Neon does)."
+        },
+        {
+          "title": "Vitest setup in api and web with one passing example test each",
+          "labels": ["type: test", "area: backend", "area: frontend", "size: S", "good first issue"],
+          "body": "## Context\nTesting infrastructure so every later issue can include tests.\n\n## Acceptance criteria\n- [ ] Vitest configured in apps/api and apps/web\n- [ ] One real example test each (e.g. /health handler; a component render with testing-library)\n- [ ] `pnpm test` green from root via turbo\n\n## Hints\nKeep config in packages/config if possible."
+        }
+      ]
+    }
+  ]
+}
