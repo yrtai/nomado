@@ -1,32 +1,95 @@
-# Nomado — planning docs
+# Nomado
 
-Open-source travel platform for inbound tourism in Kyrgyzstan: book **stays, cars, and tours** in one place (Airbnb + tours model). Built in public by junior developers to learn professional GitHub workflow on a real, large project.
+Stays, cars and tours in Kyrgyzstan — one open-source travel platform (think Airbnb + tours), built in public by junior developers learning professional GitHub workflow.
 
-> "Nomado" is a working title — rename freely.
+**Two goals, in order:** learn how real engineering teams work on GitHub, and ship a product that helps tourism in Kyrgyzstan.
 
-## Two goals, in order
+## 🚀 Quickstart (10 minutes)
 
-1. **Teach GitHub-first professional workflow** — issues, branches, PRs, reviews, CI, project boards — exactly as practiced in large companies.
-2. **Ship a real product** that helps tourism in Kyrgyzstan.
+You need: [Node.js 20+](https://nodejs.org), [pnpm](https://pnpm.io/installation) (`npm i -g pnpm`), [Docker Desktop](https://docs.docker.com/desktop/), git.
 
-The project only matters because it's big enough to make goal #1 real.
+```bash
+# 1. Get the code
+git clone https://github.com/yrtai/nomado.git
+cd nomado
 
-## Documents
+# 2. Install dependencies (one command for all apps)
+pnpm install
 
-| Doc | What it is |
-|---|---|
-| [docs/system-design.md](docs/system-design.md) | Architecture, data model, APIs, key flows. Every issue traces here. |
-| [docs/roadmap.md](docs/roadmap.md) | 9 phases, each a GitHub milestone with a demo criterion. |
-| [docs/github-workflow.md](docs/github-workflow.md) | The rules of contribution — the actual curriculum. |
-| [docs/task-breakdown.md](docs/task-breakdown.md) | ~66 GitHub-ready issues for Phases 0–2; epics for 3–8. |
+# 3. Start the local database (Postgres + Redis in Docker)
+docker compose up -d
 
-## Stack
+# 4. Create your local env file
+cp .env.example .env
 
-TypeScript everywhere. Next.js (web) · Node.js/Express (api, modular monolith) · PostgreSQL + PostGIS · Redis · pnpm + Turborepo monorepo. Free-tier deployable.
+# 5. Run everything
+pnpm dev
+```
 
-## Next steps
+Now open:
+- **http://localhost:3000** — the web app
+- **http://localhost:4000/health** — the API (you should see `{"status":"ok",...}`)
 
-1. Create the GitHub organization and `nomado` repo
-2. Push these docs as the repo's first commit
-3. Create labels, milestones, project board, templates (Phase 0 issues #10–19)
-4. Open Phase 0 issues and invite the first contributors
+Run the tests:
+
+```bash
+pnpm test        # all tests
+pnpm lint        # code style
+pnpm typecheck   # TypeScript
+```
+
+If anything fails, ask in [Discussions → Q&A](https://github.com/yrtai/nomado/discussions) — that's exactly what it's for.
+
+## 🗺️ What's in this repo
+
+```
+apps/
+  web/        → Next.js frontend          (http://localhost:3000)
+  api/        → Express API               (http://localhost:4000)
+packages/
+  shared/     → zod schemas used by BOTH web and api
+  config/     → shared tsconfig/prettier presets
+docs/         → 📖 the brain of the project (start here!)
+.github/      → CI workflows, issue templates, bootstrap automation
+```
+
+Read these in order when you join:
+
+1. [docs/github-workflow.md](docs/github-workflow.md) — **how we work** (branches, PRs, reviews). Read this first.
+2. [docs/system-design.md](docs/system-design.md) — what we're building and why it's shaped this way
+3. [docs/roadmap.md](docs/roadmap.md) — where we are (phases = GitHub milestones)
+4. [docs/task-breakdown.md](docs/task-breakdown.md) — how the work was split into issues
+
+## 🧑‍💻 Your first contribution (today, not someday)
+
+1. **Say hi** — add yourself to `CONTRIBUTORS.md` via your first PR (see issue [#19](https://github.com/yrtai/nomado/issues/19)). This teaches you the full branch → PR → review → merge loop with zero risk.
+2. **Pick a real issue** — anything labeled [`good first issue`](https://github.com/yrtai/nomado/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) that's unassigned. Comment "I'll take this" and assign yourself.
+3. **Follow the golden path** (full version in [docs/github-workflow.md](docs/github-workflow.md)):
+
+```
+branch from main:  git checkout -b feat/42-short-name
+commit:            feat(scope): what you did (#42)
+push + open PR:    fill the template, write "Closes #42"
+CI must be green → 1 approval → squash-merge 🎉
+```
+
+**Rules that protect you:** nobody pushes to `main` directly, red CI means not mergeable, every PR gets a review. Getting 10 comments on your first PR is normal and is the fastest way to learn.
+
+## 🧪 Testing
+
+Tests live next to the code they test (`*.test.ts` / `*.test.tsx`) and run with [Vitest](https://vitest.dev). Every feature PR is expected to add or update tests — see the examples:
+
+- API: [`apps/api/src/app.test.ts`](apps/api/src/app.test.ts) (HTTP tests with supertest)
+- Web: [`apps/web/app/page.test.tsx`](apps/web/app/page.test.tsx) (component tests with Testing Library)
+
+## 📊 Project status
+
+Live progress is on the [issues board](https://github.com/yrtai/nomado/issues) and [milestones](https://github.com/yrtai/nomado/milestones). Current phase: **Phase 0 → Phase 1** (auth & users).
+
+## 🛠️ Stack
+
+TypeScript everywhere · Next.js · Express · PostgreSQL + PostGIS · Redis · Prisma · pnpm + Turborepo · Vitest · GitHub Actions
+
+## 📄 License
+
+MIT (see issue #18 — yes, even the license is an issue someone gets to ship).

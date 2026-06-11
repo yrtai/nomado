@@ -1,0 +1,124 @@
+{
+  "milestone": "Phase 2: Listings",
+  "epics": [
+    {
+      "title": "Epic 2.1: Listings backend",
+      "labels": ["epic", "area: backend"],
+      "intro": "One Listing model, three types (stay/car/tour) via JSONB attributes + PostGIS location. Design: docs/system-design.md §3.3, §4.",
+      "issues": [
+        {
+          "title": "Listing, Photo, Amenity migrations: type enum, JSONB attributes, PostGIS point",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\nThe central data model of the product (docs/system-design.md §3.3).\n\n## Acceptance criteria\n- [ ] Listing: type enum (stay|car|tour), title, description, JSONB attributes, location point, base_price, currency, status enum (draft|pending_review|active|paused)\n- [ ] Photo: listing_id, url, position, is_cover\n- [ ] Amenity + ListingAmenity join table\n- [ ] PostGIS extension enabled in migration"
+        },
+        {
+          "title": "Type-specific zod schemas for stay/car/tour attributes in packages/shared",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nJSONB in the DB, type safety at the boundary — these schemas are the contract.\n\n## Acceptance criteria\n- [ ] StayAttributes (rooms, beds, maxGuests…), CarAttributes (seats, transmission, fuel…), TourAttributes (durationDays, maxGroupSize, itinerary[]…)\n- [ ] Discriminated union ListingAttributes by type\n- [ ] Unit tests with valid + invalid payloads"
+        },
+        {
+          "title": "POST /api/v1/listings — create draft listing (host only)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nFirst listings endpoint in `modules/listings/`.\n\n## Acceptance criteria\n- [ ] requireRole('host'); validates with the discriminated union schema\n- [ ] Creates with status=draft, owner = current user\n- [ ] Tests: guest → 403, invalid attributes for type → 400"
+        },
+        {
+          "title": "PATCH /api/v1/listings/:id with object-level ownership check",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nTHE classic security bug (BOLA/IDOR) — host A must not edit host B's listing. docs/system-design.md §8.\n\n## Acceptance criteria\n- [ ] Owner or admin only; other host → 403 (test this explicitly!)\n- [ ] Partial update; type immutable after creation\n- [ ] Tests for ownership matrix"
+        },
+        {
+          "title": "Photo upload: multi-image, ordering, cover selection, validation",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\nReuses the avatar-upload storage pattern from Phase 1.\n\n## Acceptance criteria\n- [ ] POST /listings/:id/photos (multi), ≤10 photos, ≤5 MB each, jpeg/png/webp\n- [ ] PATCH to reorder and set cover; DELETE removes from storage too\n- [ ] Ownership checks everywhere; tests with mocked storage"
+        },
+        {
+          "title": "Amenity seed data + attach/detach amenities on a listing",
+          "labels": ["type: feature", "area: backend", "size: S", "good first issue"],
+          "body": "## Context\nWifi, parking, AC, child seat, guide language… per listing type.\n\n## Acceptance criteria\n- [ ] Seed script with ~30 amenities grouped by listing type\n- [ ] PUT /listings/:id/amenities replaces the set; invalid ids → 400\n- [ ] Tests"
+        },
+        {
+          "title": "Publish flow: draft → pending_review → active with validation gate",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nA listing must be complete before going live; admins approve in Phase 6 (auto-approve until then).\n\n## Acceptance criteria\n- [ ] POST /listings/:id/publish checks completeness (≥3 photos, description ≥100 chars, price, location)\n- [ ] Incomplete → 422 problem+json listing what's missing\n- [ ] State machine enforced (no draft → active skipping validation); tests"
+        },
+        {
+          "title": "CalendarDay model + GET/PUT availability (block dates, price overrides)",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\nAvailability is the foundation booking (Phase 4) is built on. docs/system-design.md §4.\n\n## Acceptance criteria\n- [ ] CalendarDay: listing_id, date, status (available|blocked), price_override — unique (listing_id, date)\n- [ ] GET /listings/:id/availability?from&to; PUT bulk block/unblock range\n- [ ] Owner-only writes; tests incl. range edge cases"
+        },
+        {
+          "title": "GET /api/v1/listings/:id — full public detail (photos, amenities, host card)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nThe payload behind the listing detail page.\n\n## Acceptance criteria\n- [ ] Active listings public; drafts visible to owner/admin only (404 for others)\n- [ ] Includes ordered photos, amenities, host public card\n- [ ] Response shape as shared zod schema; tests"
+        },
+        {
+          "title": "GET /api/v1/my/listings — host dashboard list",
+          "labels": ["type: feature", "area: backend", "size: XS"],
+          "body": "## Context\nEverything the current host owns, all statuses.\n\n## Acceptance criteria\n- [ ] Returns own listings with status, cover photo, created_at\n- [ ] Pagination headers (X-Total-Count); test"
+        },
+        {
+          "title": "Integration test: full listing lifecycle (create → photos → publish → fetch)",
+          "labels": ["type: test", "area: backend", "size: M"],
+          "body": "## Context\nEnd-to-end module test, like the Phase 1 auth lifecycle test.\n\n## Acceptance criteria\n- [ ] One test walks: create draft → upload photos → set amenities → set availability → publish → public GET\n- [ ] Runs in CI against test DB"
+        }
+      ]
+    },
+    {
+      "title": "Epic 2.2: Listings frontend",
+      "labels": ["epic", "area: frontend"],
+      "intro": "Create-listing wizard, host dashboard, public listing page.",
+      "issues": [
+        {
+          "title": "Create-listing wizard shell: type → details → photos → pricing → publish",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nMulti-step form container; each step is its own issue.\n\n## Acceptance criteria\n- [ ] /host/listings/new with step indicator, next/back, draft persisted between steps\n- [ ] Step routing (refresh keeps your place)\n- [ ] Type chosen at step 1 drives later steps"
+        },
+        {
+          "title": "Wizard step: stay details form (rooms, beds, guests, address)",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Acceptance criteria\n- [ ] Form bound to StayAttributes shared schema\n- [ ] Map pin drag to set location\n- [ ] Component test for validation"
+        },
+        {
+          "title": "Wizard step: car details form (seats, transmission, fuel, pickup location)",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Acceptance criteria\n- [ ] Form bound to CarAttributes shared schema\n- [ ] Pickup location via map pin\n- [ ] Component test for validation"
+        },
+        {
+          "title": "Wizard step: tour details form (duration, group size, itinerary builder)",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Acceptance criteria\n- [ ] Form bound to TourAttributes shared schema\n- [ ] Itinerary: add/remove/reorder day entries\n- [ ] Component test for validation"
+        },
+        {
+          "title": "Wizard step: photo upload with drag-drop reorder and cover selection",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Acceptance criteria\n- [ ] Multi-file drop zone with previews + per-file progress\n- [ ] Drag to reorder; click to set cover; delete\n- [ ] Errors for too-big/wrong-type files surfaced per file"
+        },
+        {
+          "title": "Wizard step: pricing + cancellation policy picker",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Acceptance criteria\n- [ ] Base price + currency (KGS/USD/EUR)\n- [ ] Policy cards: Flexible / Moderate / Strict with plain-language explanation\n- [ ] Publish button calls publish endpoint; 422 gaps rendered as a checklist"
+        },
+        {
+          "title": "Availability calendar UI: month grid, block/unblock, price overrides",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nHosts manage when their listing is bookable.\n\n## Acceptance criteria\n- [ ] Month view; drag across dates to block/unblock a range\n- [ ] Set price override for selected dates\n- [ ] Optimistic updates with rollback; component tests"
+        },
+        {
+          "title": "Host dashboard: my listings table with status badges and actions",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Acceptance criteria\n- [ ] /host/listings: cover, title, type, status badge, edit/calendar links\n- [ ] Empty state pointing to the wizard\n- [ ] Component test"
+        },
+        {
+          "title": "Public listing detail page: gallery, amenities, map, host card, calendar",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nThe most important page of the product.\n\n## Acceptance criteria\n- [ ] /listings/[id]: photo gallery, attributes by type, amenities, map, host card, availability calendar (read-only)\n- [ ] SSR with metadata (title = listing title)\n- [ ] 404 page for unknown/draft listings"
+        },
+        {
+          "title": "ListingCard component in a shared UI location",
+          "labels": ["type: feature", "area: frontend", "size: S", "good first issue"],
+          "body": "## Context\nUsed by search results (Phase 3), wishlists (Phase 5), host dashboard.\n\n## Acceptance criteria\n- [ ] Cover photo, title, type badge, price/night (or /day, /person), rating placeholder\n- [ ] Component test; used on the host dashboard"
+        }
+      ]
+    }
+  ]
+}

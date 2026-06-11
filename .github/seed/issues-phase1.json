@@ -1,0 +1,131 @@
+{
+  "milestone": "Phase 1: Auth & users",
+  "epics": [
+    {
+      "title": "Epic 1.1: Backend auth",
+      "labels": ["epic", "area: backend"],
+      "intro": "Email/password + Google OAuth with JWT access tokens and rotating refresh cookies. Design: docs/system-design.md §3.2 (auth module), §5 (API), §8 (security).",
+      "issues": [
+        {
+          "title": "User table migration (Prisma): id, email, name, role, password_hash, avatar_url, locale",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nFirst real table; unlocks all of Phase 1. Data model in docs/system-design.md §4.\n\n## Acceptance criteria\n- [ ] Prisma model + migration committed\n- [ ] `role` enum: guest | host | admin (default guest)\n- [ ] Unique index on email (case-insensitive)\n\n## Hints\nDepends on the Prisma setup issue from Phase 0 (epic 0.1)."
+        },
+        {
+          "title": "POST /api/v1/auth/register with zod validation and argon2 hashing",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nFirst auth endpoint, in `modules/auth/`.\n\n## Acceptance criteria\n- [ ] Request schema in packages/shared (email, password ≥8, name)\n- [ ] Password hashed with argon2id; never logged or returned\n- [ ] Duplicate email → 409 problem+json\n- [ ] Tests: happy path, weak password, duplicate\n\n## Hints\nFollow the module layout in apps/api/src/modules/README.md."
+        },
+        {
+          "title": "POST /api/v1/auth/login: JWT access token + httpOnly refresh cookie",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nShort-lived access token (15 min) in body; refresh token (30 d) as httpOnly SameSite=Lax cookie.\n\n## Acceptance criteria\n- [ ] Wrong email and wrong password return the SAME 401 (no user enumeration)\n- [ ] Access token contains userId + role claims\n- [ ] Refresh token persisted (hashed) for revocation\n- [ ] Tests for all paths"
+        },
+        {
+          "title": "POST /api/v1/auth/refresh with rotation + POST /auth/logout",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\nRefresh rotation: each use invalidates the old token and issues a new one — reuse of a stale token revokes the whole session family.\n\n## Acceptance criteria\n- [ ] Valid refresh → new access + new refresh cookie\n- [ ] Reused/old refresh → 401 and session family revoked\n- [ ] Logout clears cookie and revokes server-side\n- [ ] Tests incl. the reuse-detection case"
+        },
+        {
+          "title": "Auth middleware + role guard (requireAuth, requireRole)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nEvery protected route uses these two middlewares.\n\n## Acceptance criteria\n- [ ] `requireAuth` verifies JWT, attaches `req.user`\n- [ ] `requireRole('host')` → 403 problem+json when role insufficient\n- [ ] Exported from `modules/auth/index.ts` (the module's public interface)\n- [ ] Unit tests"
+        },
+        {
+          "title": "Google OAuth: authorization-code flow with account linking by email",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\n\"Continue with Google\" for tourists who won't create another password.\n\n## Acceptance criteria\n- [ ] GET /auth/google → consent redirect; callback exchanges code\n- [ ] Existing email → link accounts; new email → create user\n- [ ] Issues the same JWT + refresh cookie as password login\n- [ ] Secrets via env only (.env.example updated)\n\n## Hints\nUse Google's OpenID Connect endpoints directly — no passport needed."
+        },
+        {
+          "title": "Rate limiting on auth endpoints (Redis sliding window)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nBrute-force protection (docs/system-design.md §7).\n\n## Acceptance criteria\n- [ ] register/login/refresh limited per IP (e.g. 10/min) and per email (e.g. 5/min)\n- [ ] 429 problem+json with Retry-After header\n- [ ] Tests with a fake Redis or testcontainer"
+        },
+        {
+          "title": "Integration test: full auth lifecycle (register → login → refresh → logout)",
+          "labels": ["type: test", "area: backend", "size: M"],
+          "body": "## Context\nOne test that walks the whole flow catches integration bugs unit tests miss.\n\n## Acceptance criteria\n- [ ] Single test file runs the full lifecycle against the real express app + test DB\n- [ ] Asserts cookie flags (httpOnly, SameSite)\n- [ ] Runs in CI"
+        },
+        {
+          "title": "Research: sessions vs JWT — write a 1-page comparison in Discussions",
+          "labels": ["research", "size: S", "good first issue"],
+          "body": "## Context\nWe chose JWT + refresh rotation. Understand what we gave up.\n\n## Acceptance criteria\n- [ ] 1-page post in Discussions → Ideas: server sessions vs JWT (revocation, scaling, complexity)\n- [ ] Ends with: when would we switch to sessions?\n\n## Hints\nNo code. This is how engineers build judgment."
+        }
+      ]
+    },
+    {
+      "title": "Epic 1.2: Users & profiles (backend)",
+      "labels": ["epic", "area: backend"],
+      "intro": "Profile CRUD, avatar upload, become-a-host flow. Design: docs/system-design.md §3.2 (users module).",
+      "issues": [
+        {
+          "title": "GET and PATCH /api/v1/users/me (name, bio, languages, locale)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nUsers manage their own profile in `modules/users/`.\n\n## Acceptance criteria\n- [ ] GET returns own profile (never password_hash — test this!)\n- [ ] PATCH validates with shared zod schema; unknown fields rejected\n- [ ] 401 without token; tests included"
+        },
+        {
+          "title": "Avatar upload to S3-compatible object storage",
+          "labels": ["type: feature", "area: backend", "size: M"],
+          "body": "## Context\nFirst file-upload path — the pattern listings photos will reuse (docs/system-design.md §8).\n\n## Acceptance criteria\n- [ ] POST /users/me/avatar accepts jpeg/png/webp ≤ 2 MB; 415/413 otherwise\n- [ ] Stored in object storage (Cloudflare R2/S3); never on the API host\n- [ ] avatar_url saved; old avatar deleted\n- [ ] Tests with mocked storage client"
+        },
+        {
+          "title": "POST /api/v1/users/me/become-host: HostProfile + role upgrade",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nTwo-sided marketplace: guests upgrade to hosts.\n\n## Acceptance criteria\n- [ ] Creates HostProfile (about, phone) and sets role=host in one transaction\n- [ ] Idempotent: calling twice doesn't duplicate\n- [ ] New JWT claims take effect on next refresh; tests"
+        },
+        {
+          "title": "GET /api/v1/users/:id — public profile (joined date, languages, listing count)",
+          "labels": ["type: feature", "area: backend", "size: S"],
+          "body": "## Context\nWhat guests see when checking out a host.\n\n## Acceptance criteria\n- [ ] Returns ONLY public fields (decide them in the shared schema)\n- [ ] 404 problem+json for unknown id\n- [ ] Test asserting private fields (email!) are absent"
+        }
+      ]
+    },
+    {
+      "title": "Epic 1.3: Frontend auth & profiles",
+      "labels": ["epic", "area: frontend"],
+      "intro": "Register/login UI, auth state, protected routes, profile pages.",
+      "issues": [
+        {
+          "title": "Register and login pages with react-hook-form + shared zod schemas",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nThe SAME zod schemas validate in the browser and on the server — packages/shared in action.\n\n## Acceptance criteria\n- [ ] /register and /login pages, accessible labels + errors\n- [ ] Client-side validation from @nomado/shared schemas\n- [ ] API errors (409, 401) rendered inline\n- [ ] Component tests for validation states"
+        },
+        {
+          "title": "Auth provider: token storage, auto-refresh, useAuth() hook",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nCentral auth state for the whole app.\n\n## Acceptance criteria\n- [ ] Access token kept in memory (NOT localStorage — XSS); refresh via cookie on 401 then retry once\n- [ ] `useAuth()` exposes user, login, logout, isLoading\n- [ ] Logout clears state and calls the API\n- [ ] Tests with mocked fetch"
+        },
+        {
+          "title": "Protected routes: redirect to /login with return-to",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Context\nTrips, profile, host dashboard require login.\n\n## Acceptance criteria\n- [ ] Unauthenticated visit → /login?next=/original/path\n- [ ] After login, user lands on the original page\n- [ ] Loading state while auth resolves (no flash of wrong content)"
+        },
+        {
+          "title": "\"Continue with Google\" button + OAuth callback page",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Context\nFrontend half of the Google OAuth flow.\n\n## Acceptance criteria\n- [ ] Button on register + login pages (Google brand guidelines)\n- [ ] /auth/callback handles success and error states\n- [ ] Ends fully logged in (auth provider state set)"
+        },
+        {
+          "title": "Profile page: view and edit own profile with avatar upload",
+          "labels": ["type: feature", "area: frontend", "size: M"],
+          "body": "## Context\nFirst real form-heavy page.\n\n## Acceptance criteria\n- [ ] /profile shows current data; edit mode with save/cancel\n- [ ] Avatar upload with preview + progress\n- [ ] Optimistic update with rollback on error\n- [ ] Component tests"
+        },
+        {
+          "title": "Public profile page /users/[id]",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Context\nPublic host/guest profile view.\n\n## Acceptance criteria\n- [ ] Renders public profile from API; 404 page for unknown user\n- [ ] SSR with proper <title> (SEO matters later — start now)"
+        },
+        {
+          "title": "Navbar with auth state: login link vs avatar dropdown menu",
+          "labels": ["type: feature", "area: frontend", "size: S", "good first issue"],
+          "body": "## Context\nVisible auth state on every page.\n\n## Acceptance criteria\n- [ ] Logged out: Login + Sign up buttons\n- [ ] Logged in: avatar + dropdown (Profile, Trips, Logout; Host dashboard if role=host)\n- [ ] Keyboard accessible; component test for both states"
+        },
+        {
+          "title": "Become-a-host onboarding screen",
+          "labels": ["type: feature", "area: frontend", "size: S"],
+          "body": "## Context\nFront door of the host funnel.\n\n## Acceptance criteria\n- [ ] /host/onboarding explains hosting + form (about, phone)\n- [ ] Success → host dashboard placeholder; navbar updates to host menu"
+        }
+      ]
+    }
+  ]
+}

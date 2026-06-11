@@ -1,0 +1,4 @@
+{
+  "extends": "@nomado/config/tsconfig.base.json",
+  "include": ["src"]
+}

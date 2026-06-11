@@ -1,0 +1,19 @@
+{
+  "name": "@nomado/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@nomado/config": "workspace:*",
+    "typescript": "^5.8.2"
+  }
+}

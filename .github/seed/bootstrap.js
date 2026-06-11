@@ -63,14 +63,13 @@ async function listAll(url) {
     }
   }
 
-  // 3. Issues (children first, then epics referencing their numbers)
-  const data = seed('issues.json');
-  const milestone = msNumber.get(data.milestone);
+  // 3. Issues (children first, then epics referencing their numbers).
+  //    Reads every issues*.json file in this folder, in name order.
   const existingIssues = new Map(
     (await listAll('/issues?state=all')).map((i) => [i.title, i.number])
   );
 
-  const create = async (title, body, labels) => {
+  const create = async (title, body, labels, milestone) => {
     if (existingIssues.has(title)) {
       console.log(`issue = ${title}`);
       return existingIssues.get(title);
@@ -82,15 +81,26 @@ async function listAll(url) {
     return created.number;
   };
 
-  for (const epic of data.epics) {
-    const childNumbers = [];
-    for (const issue of epic.issues) {
-      childNumbers.push(await create(issue.title, issue.body, issue.labels));
+  const issueFiles = fs
+    .readdirSync(__dirname)
+    .filter((f) => /^issues.*\.json$/.test(f))
+    .sort();
+
+  for (const file of issueFiles) {
+    const data = seed(file);
+    const milestone = msNumber.get(data.milestone);
+    for (const epic of data.epics) {
+      const childNumbers = [];
+      for (const issue of epic.issues) {
+        childNumbers.push(
+          await create(issue.title, issue.body, issue.labels, milestone)
+        );
+      }
+      const body =
+        `${epic.intro}\n\n## Child issues\n` +
+        childNumbers.map((n) => `- [ ] #${n}`).join('\n');
+      await create(epic.title, body, epic.labels, milestone);
     }
-    const body =
-      `${epic.intro}\n\n## Child issues\n` +
-      childNumbers.map((n) => `- [ ] #${n}`).join('\n');
-    await create(epic.title, body, epic.labels);
   }
 
   // 4. Body fixups (optional, idempotent)
