@@ -93,6 +93,20 @@ async function listAll(url) {
     await create(epic.title, body, epic.labels);
   }
 
+  // 4. Body fixups (optional, idempotent)
+  const fixupsPath = path.join(__dirname, 'fixups.json');
+  if (fs.existsSync(fixupsPath)) {
+    for (const f of JSON.parse(fs.readFileSync(fixupsPath, 'utf8'))) {
+      const issue = await gh('GET', `/issues/${f.number}`);
+      if (issue.body && issue.body.includes(f.find)) {
+        await gh('PATCH', `/issues/${f.number}`, {
+          body: issue.body.replace(f.find, f.replace),
+        });
+        console.log(`fixup ~ #${f.number}`);
+      }
+    }
+  }
+
   console.log('Bootstrap complete.');
 })().catch((e) => {
   console.error(e);

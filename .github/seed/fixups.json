@@ -1,0 +1,6 @@
+[
+  {"number": 13, "find": "after CI (#19) has run once", "replace": "after CI (#21) has run once"},
+  {"number": 17, "find": "pointing to CONTRIBUTORS.md (#18)", "replace": "pointing to CONTRIBUTORS.md (#19)"},
+  {"number": 21, "find": "branch protection (#12)", "replace": "branch protection (#13)"},
+  {"number": 22, "find": "Extends #19.", "replace": "Extends #21."}
+]
