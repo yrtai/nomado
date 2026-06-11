@@ -1,0 +1,4 @@
+{
+  "comment": "Done in eedfe51 (monorepo scaffold + CI). Closing as completed — see the repo root and `.github/workflows/` for the implementation.",
+  "numbers": [1, 2, 3, 4, 5, 6, 8, 9, 21, 22, 23, 24, 26]
+}

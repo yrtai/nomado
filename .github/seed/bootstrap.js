@@ -117,6 +117,23 @@ async function listAll(url) {
     }
   }
 
+  // 5. Close completed issues (optional, idempotent)
+  const closePath = path.join(__dirname, 'close.json');
+  if (fs.existsSync(closePath)) {
+    const { comment, numbers } = JSON.parse(fs.readFileSync(closePath, 'utf8'));
+    for (const n of numbers) {
+      const issue = await gh('GET', `/issues/${n}`);
+      if (issue.state === 'open') {
+        if (comment) await gh('POST', `/issues/${n}/comments`, { body: comment });
+        await gh('PATCH', `/issues/${n}`, {
+          state: 'closed',
+          state_reason: 'completed',
+        });
+        console.log(`closed #${n}`);
+      }
+    }
+  }
+
   console.log('Bootstrap complete.');
 })().catch((e) => {
   console.error(e);
